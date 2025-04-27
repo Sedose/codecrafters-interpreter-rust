@@ -58,22 +58,21 @@ fn scan_tokens(source_text: &str) -> ScanResult {
                     tokens.push(Token::new(TokenType::Equal, "="));
                 }
             }
-            '(' => tokens.push(Token::new(TokenType::LeftParen, "(")),
-            ')' => tokens.push(Token::new(TokenType::RightParen, ")")),
-            '{' => tokens.push(Token::new(TokenType::LeftBrace, "{")),
-            '}' => tokens.push(Token::new(TokenType::RightBrace, "}")),
-            ',' => tokens.push(Token::new(TokenType::Comma, ",")),
-            '.' => tokens.push(Token::new(TokenType::Dot, ".")),
-            '-' => tokens.push(Token::new(TokenType::Minus, "-")),
-            '+' => tokens.push(Token::new(TokenType::Plus, "+")),
-            ';' => tokens.push(Token::new(TokenType::Semicolon, ";")),
-            '*' => tokens.push(Token::new(TokenType::Star, "*")),
-            unexpected_character => {
-                eprintln!(
-                    "[line 1] Error: Unexpected character: {}",
-                    unexpected_character
-                );
-                encountered_lexical_error = true;
+            '!' => {
+                if let Some('=') = characters.peek() {
+                    characters.next();
+                    tokens.push(Token::new(TokenType::BangEqual, "!="));
+                } else {
+                    tokens.push(Token::new(TokenType::Bang, "!"));
+                }
+            }
+            other_character => {
+                if let Some((lexeme, token_type)) = single_character_token(other_character) {
+                    tokens.push(Token::new(token_type, lexeme));
+                } else {
+                    eprintln!("[line 1] Error: Unexpected character: {}", other_character);
+                    encountered_lexical_error = true;
+                }
             }
         }
     }
@@ -82,6 +81,22 @@ fn scan_tokens(source_text: &str) -> ScanResult {
     ScanResult {
         tokens,
         encountered_lexical_error,
+    }
+}
+
+fn single_character_token(character: char) -> Option<(&'static str, TokenType)> {
+    match character {
+        '(' => Some(("(", TokenType::LeftParen)),
+        ')' => Some((")", TokenType::RightParen)),
+        '{' => Some(("{", TokenType::LeftBrace)),
+        '}' => Some(("}", TokenType::RightBrace)),
+        ',' => Some((",", TokenType::Comma)),
+        '.' => Some((".", TokenType::Dot)),
+        '-' => Some(("-", TokenType::Minus)),
+        '+' => Some(("+", TokenType::Plus)),
+        ';' => Some((";", TokenType::Semicolon)),
+        '*' => Some(("*", TokenType::Star)),
+        _ => None,
     }
 }
 
