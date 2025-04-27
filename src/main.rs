@@ -43,6 +43,8 @@ fn scan_tokens(source_text: &str) -> Vec<Token> {
         .filter_map(|current_char| match current_char {
             '(' => Some(Token::new(TokenType::LeftParen, "(")),
             ')' => Some(Token::new(TokenType::RightParen, ")")),
+            '{' => Some(Token::new(TokenType::LeftBrace, "{")),
+            '}' => Some(Token::new(TokenType::RightBrace, "}")),
             _ => None,
         })
         .collect();
