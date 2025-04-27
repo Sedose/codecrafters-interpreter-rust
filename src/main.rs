@@ -6,11 +6,6 @@ use std::fs;
 use std::io::{self, Write};
 use std::process;
 
-struct ScanResult {
-    tokens: Vec<Token>,
-    encountered_lexical_error: bool,
-}
-
 fn main() {
     let input_arguments: Vec<String> = env::args().collect();
     if input_arguments.len() < 3 {
@@ -19,7 +14,7 @@ fn main() {
             "Usage: {} tokenize <filename>",
             input_arguments[0]
         )
-            .unwrap();
+        .unwrap();
         return;
     }
     let command_name = &input_arguments[1];
@@ -34,7 +29,10 @@ fn main() {
         String::new()
     });
 
-    let ScanResult { tokens, encountered_lexical_error } = scan_tokens(&file_contents);
+    let ScanResult {
+        tokens,
+        encountered_lexical_error,
+    } = scan_tokens(&file_contents);
 
     for token in tokens {
         println!("{} {} null", token.token_type.as_output(), token.lexeme);
@@ -48,9 +46,18 @@ fn main() {
 fn scan_tokens(source_text: &str) -> ScanResult {
     let mut tokens: Vec<Token> = Vec::new();
     let mut encountered_lexical_error = false;
+    let mut characters = source_text.chars().peekable();
 
-    for current_character in source_text.chars() {
+    while let Some(current_character) = characters.next() {
         match current_character {
+            '=' => {
+                if let Some('=') = characters.peek() {
+                    characters.next();
+                    tokens.push(Token::new(TokenType::EqualEqual, "=="));
+                } else {
+                    tokens.push(Token::new(TokenType::Equal, "="));
+                }
+            }
             '(' => tokens.push(Token::new(TokenType::LeftParen, "(")),
             ')' => tokens.push(Token::new(TokenType::RightParen, ")")),
             '{' => tokens.push(Token::new(TokenType::LeftBrace, "{")),
@@ -72,5 +79,13 @@ fn scan_tokens(source_text: &str) -> ScanResult {
     }
 
     tokens.push(Token::new(TokenType::Eof, ""));
-    ScanResult { tokens, encountered_lexical_error }
+    ScanResult {
+        tokens,
+        encountered_lexical_error,
+    }
+}
+
+struct ScanResult {
+    tokens: Vec<Token>,
+    encountered_lexical_error: bool,
 }

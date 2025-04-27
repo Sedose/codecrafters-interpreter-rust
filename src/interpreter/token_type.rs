@@ -10,6 +10,8 @@ pub enum TokenType {
     Plus,
     Semicolon,
     Star,
+    Equal,
+    EqualEqual,
     Eof,
 }
 
@@ -26,6 +28,8 @@ impl TokenType {
             TokenType::Plus => "PLUS",
             TokenType::Semicolon => "SEMICOLON",
             TokenType::Star => "STAR",
+            TokenType::Equal => "EQUAL",
+            TokenType::EqualEqual => "EQUAL_EQUAL",
             TokenType::Eof => "EOF",
         }
     }
