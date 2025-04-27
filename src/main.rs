@@ -40,11 +40,17 @@ fn main() {
 fn scan_tokens(source_text: &str) -> Vec<Token> {
     let mut scanned_tokens: Vec<Token> = source_text
         .chars()
-        .filter_map(|current_char| match current_char {
+        .filter_map(|current_character| match current_character {
             '(' => Some(Token::new(TokenType::LeftParen, "(")),
             ')' => Some(Token::new(TokenType::RightParen, ")")),
             '{' => Some(Token::new(TokenType::LeftBrace, "{")),
             '}' => Some(Token::new(TokenType::RightBrace, "}")),
+            ',' => Some(Token::new(TokenType::Comma, ",")),
+            '.' => Some(Token::new(TokenType::Dot, ".")),
+            '-' => Some(Token::new(TokenType::Minus, "-")),
+            '+' => Some(Token::new(TokenType::Plus, "+")),
+            ';' => Some(Token::new(TokenType::Semicolon, ";")),
+            '*' => Some(Token::new(TokenType::Star, "*")),
             _ => None,
         })
         .collect();
