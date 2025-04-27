@@ -1,38 +1,39 @@
+mod interpreter;
+use interpreter::token::Token;
+use interpreter::token_type::TokenType;
 use std::env;
 use std::fs;
 use std::io::{self, Write};
 
-#[derive(Debug)]
-enum TokenType {
-    LeftParen,
-    RightParen,
-    Eof,
-}
-
-#[derive(Debug)]
-struct Token {
-    token_type: TokenType,
-    lexeme: &'static str,
-    literal: Option<String>,
-}
-
-impl Token {
-    fn new(token_type: TokenType, lexeme: &'static str) -> Self {
-        Token {
-            token_type,
-            lexeme,
-            literal: None,
-        }
+fn main() {
+    let cli_arguments: Vec<String> = env::args().collect();
+    if cli_arguments.len() < 3 {
+        writeln!(
+            io::stderr(),
+            "Usage: {} tokenize <filename>",
+            cli_arguments[0],
+        )
+        .unwrap();
+        return;
     }
-}
 
-impl TokenType {
-    fn as_output(&self) -> &'static str {
-        match self {
-            TokenType::LeftParen => "LEFT_PAREN",
-            TokenType::RightParen => "RIGHT_PAREN",
-            TokenType::Eof => "EOF",
-        }
+    let command = &cli_arguments[1];
+    let filename = &cli_arguments[2];
+
+    if command != "tokenize" {
+        writeln!(io::stderr(), "Unknown command: {}", command).unwrap();
+        return;
+    }
+
+    let source_text = fs::read_to_string(filename).unwrap_or_else(|_| {
+        writeln!(io::stderr(), "Failed to read file {filename}").unwrap();
+        String::new()
+    });
+
+    let scanned_tokens = scan_tokens(&source_text);
+
+    for token in scanned_tokens {
+        println!("{} {} null", token.token_type.as_output(), token.lexeme);
     }
 }
 
@@ -48,35 +49,4 @@ fn scan_tokens(source_text: &str) -> Vec<Token> {
 
     scanned_tokens.push(Token::new(TokenType::Eof, ""));
     scanned_tokens
-}
-
-fn main() {
-    let cli_arguments: Vec<String> = env::args().collect();
-    if cli_arguments.len() < 3 {
-        writeln!(io::stderr(), "Usage: {} tokenize <filename>", cli_arguments[0]).unwrap();
-        return;
-    }
-
-    let command = &cli_arguments[1];
-    let filename = &cli_arguments[2];
-
-    if command != "tokenize" {
-        writeln!(io::stderr(), "Unknown command: {}", command).unwrap();
-        return;
-    }
-
-    let source_text = fs::read_to_string(filename).unwrap_or_else(|_| {
-        writeln!(io::stderr(), "Failed to read file {}", filename).unwrap();
-        String::new()
-    });
-
-    let scanned_tokens = scan_tokens(&source_text);
-
-    for token in scanned_tokens {
-        println!(
-            "{} {} null",
-            token.token_type.as_output(),
-            token.lexeme
-        );
-    }
 }
