@@ -99,3 +99,130 @@ struct ScanResult {
     tokens: Vec<Token>,
     encountered_lexical_error: bool,
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_combined_mixed_input() {
+        let (outputs, error) = lex_outputs("(,{!==}$)");
+        assert!(error);
+        assert_eq!(
+            outputs,
+            vec![
+                "LEFT_PAREN ( null",
+                "COMMA , null",
+                "LEFT_BRACE { null",
+                "BANG_EQUAL != null",
+                "EQUAL = null",
+                "RIGHT_BRACE } null",
+                "RIGHT_PAREN ) null",
+                "EOF  null",
+            ]
+        );
+    }
+
+    #[test]
+    fn test_parentheses_scanning() {
+        let (outputs, error) = lex_outputs("(()");
+        assert!(!error);
+        assert_eq!(
+            outputs,
+            vec![
+                "LEFT_PAREN ( null",
+                "LEFT_PAREN ( null",
+                "RIGHT_PAREN ) null",
+                "EOF  null",
+            ]
+        );
+    }
+
+    #[test]
+    fn test_braces_scanning() {
+        let (outputs, error) = lex_outputs("{{}}");
+        assert!(!error);
+        assert_eq!(
+            outputs,
+            vec![
+                "LEFT_BRACE { null",
+                "LEFT_BRACE { null",
+                "RIGHT_BRACE } null",
+                "RIGHT_BRACE } null",
+                "EOF  null",
+            ]
+        );
+    }
+
+    #[test]
+    fn test_single_character_tokens() {
+        let (outputs, error) = lex_outputs("({*.,+*})");
+        assert!(!error);
+        assert_eq!(
+            outputs,
+            vec![
+                "LEFT_PAREN ( null",
+                "LEFT_BRACE { null",
+                "STAR * null",
+                "DOT . null",
+                "COMMA , null",
+                "PLUS + null",
+                "STAR * null",
+                "RIGHT_BRACE } null",
+                "RIGHT_PAREN ) null",
+                "EOF  null",
+            ]
+        );
+    }
+
+    #[test]
+    fn test_assignment_and_equality_scanning() {
+        let (outputs, error) = lex_outputs("={===}");
+        assert!(!error);
+        assert_eq!(
+            outputs,
+            vec![
+                "EQUAL = null",
+                "LEFT_BRACE { null",
+                "EQUAL_EQUAL == null",
+                "EQUAL = null",
+                "RIGHT_BRACE } null",
+                "EOF  null",
+            ]
+        );
+    }
+
+    #[test]
+    fn test_negation_and_inequality_scanning() {
+        let (outputs, error) = lex_outputs("!!===");
+        assert!(!error);
+        assert_eq!(
+            outputs,
+            vec![
+                "BANG ! null",
+                "BANG_EQUAL != null",
+                "EQUAL_EQUAL == null",
+                "EOF  null",
+            ]
+        );
+    }
+
+    #[test]
+    fn test_unexpected_characters() {
+        let (outputs, error) = lex_outputs("$#(");
+        assert!(error);
+        assert_eq!(outputs, vec!["LEFT_PAREN ( null", "EOF  null",]);
+    }
+
+    fn lex_outputs(source: &str) -> (Vec<String>, bool) {
+        let ScanResult {
+            tokens,
+            encountered_lexical_error,
+        } = scan_tokens(source);
+        let outputs = tokens
+            .into_iter()
+            .map(|token| format!("{} {} null", token.token_type.as_output(), token.lexeme))
+            .collect();
+        (outputs, encountered_lexical_error)
+    }
+}
