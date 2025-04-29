@@ -43,40 +43,35 @@ fn main() {
     }
 }
 
-fn scan_tokens(source_text: &str) -> ScanResult {
-    let mut tokens: Vec<Token> = Vec::new();
+fn scan_tokens(source: &str) -> ScanResult {
+    let mut tokens = Vec::new();
     let mut encountered_lexical_error = false;
-    let mut characters = source_text.chars().peekable();
+    let mut chars = source.chars().peekable();
 
-    while let Some(current_character) = characters.next() {
-        match current_character {
-            '=' => {
-                if let Some('=') = characters.peek() {
-                    characters.next();
-                    tokens.push(Token::new(TokenType::EqualEqual, "=="));
-                } else {
-                    tokens.push(Token::new(TokenType::Equal, "="));
-                }
+    while let Some(c) = chars.next() {
+        if let Some((token_type, lexeme)) = match (c, chars.peek()) {
+            ('=', Some(&'=')) => {
+                chars.next();
+                Some((TokenType::EqualEqual, "=="))
             }
-            '!' => {
-                if let Some('=') = characters.peek() {
-                    characters.next();
-                    tokens.push(Token::new(TokenType::BangEqual, "!="));
-                } else {
-                    tokens.push(Token::new(TokenType::Bang, "!"));
-                }
+            ('=', _) => Some((TokenType::Equal, "=")),
+            ('!', Some(&'=')) => {
+                chars.next();
+                Some((TokenType::BangEqual, "!="))
             }
-            other_character => {
-                if let Some((lexeme, token_type)) = single_character_token(other_character) {
-                    tokens.push(Token::new(token_type, lexeme));
-                } else {
-                    eprintln!("[line 1] Error: Unexpected character: {}", other_character);
-                    encountered_lexical_error = true;
-                }
-            }
+            ('!', _) => Some((TokenType::Bang, "!")),
+            _ => None,
+        } {
+            tokens.push(Token::new(token_type, lexeme));
+            continue;
+        }
+        if let Some((lexeme, token_type)) = single_character_token(c) {
+            tokens.push(Token::new(token_type, lexeme));
+        } else {
+            eprintln!("[line 1] Error: Unexpected character: {}", c);
+            encountered_lexical_error = true;
         }
     }
-
     tokens.push(Token::new(TokenType::Eof, ""));
     ScanResult {
         tokens,
