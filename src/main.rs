@@ -1,11 +1,14 @@
 mod interpreter;
-use crate::TokenType::*;
+
 use interpreter::token::Token;
 use interpreter::token_type::TokenType;
+use interpreter::token_type::TokenType::*;
 use std::env;
 use std::fs;
 use std::io::{self, Write};
+use std::iter::Peekable;
 use std::process;
+use std::str::Chars;
 
 fn main() {
     let input_arguments: Vec<String> = env::args().collect();
@@ -15,7 +18,7 @@ fn main() {
             "Usage: {} tokenize <filename>",
             input_arguments[0]
         )
-        .unwrap();
+          .unwrap();
         return;
     }
     let command_name = &input_arguments[1];
@@ -44,46 +47,86 @@ fn main() {
     }
 }
 
-fn scan_tokens(source: &str) -> ScanResult {
-    let mut tokens = Vec::new();
-    let mut encountered_lexical_error = false;
-    let mut chars = source.chars().peekable();
-
-    while let Some(current_char) = chars.next() {
-        if current_char == '/' {
-            match chars.peek() {
-                Some('/') => {
-                    // Skip comment
-                    while let Some(next_char) = chars.peek() {
-                        if *next_char == '\n' {
-                            break;
-                        }
-                        chars.next();
-                    }
+fn comment_rule(char_iterator: &mut Peekable<Chars>) -> Option<Token> {
+    if let Some('/') = char_iterator.peek().copied() {
+        char_iterator.next();
+        if let Some('/') = char_iterator.peek().copied() {
+            char_iterator.next();
+            while let Some(&next_character) = char_iterator.peek() {
+                if next_character == '\n' {
+                    break;
                 }
-                _ => {
-                    tokens.push(Token::new(Slash, "/"));
-                }
+                char_iterator.next();
             }
-            continue;
+            return None;
         }
+        return Some(Token::new(Slash, "/"));
+    }
+    None
+}
 
-        if let Some((token_type, lexeme)) = two_character_token(current_char, chars.peek()) {
-            chars.next();
-            tokens.push(Token::new(token_type, lexeme));
-            continue;
-        }
-        if let Some((lexeme, token_type)) = single_character_token(current_char) {
-            tokens.push(Token::new(token_type, lexeme));
-        } else {
-            eprintln!("[line 1] Error: Unexpected character: {}", current_char);
-            encountered_lexical_error = true;
+fn two_character_rule(char_iterator: &mut Peekable<Chars>) -> Option<Token> {
+    if let Some(&first_character) = char_iterator.peek() {
+        let mut iterator_clone = char_iterator.clone();
+        iterator_clone.next();
+        if let Some(&second_character) = iterator_clone.peek() {
+            if let Some((token_type, lexeme)) = two_character_token(first_character, Some(&second_character)) {
+                char_iterator.next();
+                char_iterator.next();
+                return Some(Token::new(token_type, lexeme));
+            }
         }
     }
-    tokens.push(Token::new(Eof, ""));
+    None
+}
+
+fn single_character_rule(char_iterator: &mut Peekable<Chars>) -> Option<Token> {
+    if let Some(&character) = char_iterator.peek() {
+        if let Some((lexeme, token_type)) = single_character_token(character) {
+            char_iterator.next();
+            return Some(Token::new(token_type, lexeme));
+        }
+    }
+    None
+}
+
+static RULE_FUNCTIONS: [fn(&mut Peekable<Chars>) -> Option<Token>; 3] = [
+    comment_rule,
+    two_character_rule,
+    single_character_rule,
+];
+
+fn scan_tokens(source: &str) -> ScanResult {
+    let mut collected_tokens = Vec::new();
+    let mut found_lexical_error = false;
+    let mut char_iterator = source.chars().peekable();
+
+    while char_iterator.peek().is_some() {
+        let mut matched = false;
+        for rule in RULE_FUNCTIONS {
+            if let Some(token) = rule(&mut char_iterator) {
+                if token.token_type != Comment {
+                    collected_tokens.push(token);
+                }
+                matched = true;
+                break;
+            }
+        }
+        if !matched {
+            if let Some(unexpected_character) = char_iterator.next() {
+                eprintln!(
+                    "[line 1] Error: Unexpected character: {}",
+                    unexpected_character
+                );
+                found_lexical_error = true;
+            }
+        }
+    }
+
+    collected_tokens.push(Token::new(Eof, ""));
     ScanResult {
-        tokens,
-        encountered_lexical_error,
+        tokens: collected_tokens,
+        encountered_lexical_error: found_lexical_error,
     }
 }
 
@@ -108,8 +151,11 @@ fn single_character_token(character: char) -> Option<(&'static str, TokenType)> 
     Some(res)
 }
 
-fn two_character_token(first: char, second: Option<&char>) -> Option<(TokenType, &'static str)> {
-    let token_pair = match (first, second?) {
+fn two_character_token(
+    first: char,
+    second: Option<&char>,
+) -> Option<(TokenType, &'static str)> {
+    let token_pair = match (first, *second?) {
         ('=', '=') => (EqualEqual, "=="),
         ('!', '=') => (BangEqual, "!="),
         ('<', '=') => (LessEqual, "<="),

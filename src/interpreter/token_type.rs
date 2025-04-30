@@ -11,6 +11,7 @@ pub enum TokenType {
     Semicolon,
     Slash,
     Star,
+    Comment,
     Bang,
     BangEqual,
     Equal,
@@ -36,6 +37,7 @@ impl TokenType {
             TokenType::Semicolon => "SEMICOLON",
             TokenType::Slash => "SLASH",
             TokenType::Star => "STAR",
+            TokenType::Comment => "COMMENT",
             TokenType::Bang => "BANG",
             TokenType::BangEqual => "BANG_EQUAL",
             TokenType::Equal => "EQUAL",
@@ -46,5 +48,11 @@ impl TokenType {
             TokenType::GreaterEqual => "GREATER_EQUAL",
             TokenType::Eof => "EOF",
         }
+    }
+}
+
+impl PartialEq for TokenType {
+    fn eq(&self, other: &Self) -> bool {
+        std::mem::discriminant(self) == std::mem::discriminant(other)
     }
 }
