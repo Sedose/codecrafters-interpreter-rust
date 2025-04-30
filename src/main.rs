@@ -18,7 +18,7 @@ fn main() {
             "Usage: {} tokenize <filename>",
             input_arguments[0]
         )
-          .unwrap();
+        .unwrap();
         return;
     }
     let command_name = &input_arguments[1];
@@ -54,13 +54,11 @@ fn scan_tokens(source: &str) -> ScanResult {
 
     while let Some(_) = character_iterator.peek() {
         let maybe_token = RULE_FUNCTIONS
-          .iter()
-          .find_map(|rule| rule(&mut character_iterator));
+            .iter()
+            .find_map(|rule| rule(&mut character_iterator));
 
         if let Some(token) = maybe_token {
-            if token.token_type != Comment {
-                tokens.push(token);
-            }
+            tokens.push(token);
         } else if let Some(unexpected_character) = character_iterator.next() {
             eprintln!(
                 "[line 1] Error: Unexpected character: {}",
@@ -98,10 +96,7 @@ fn single_character_token(character: char) -> Option<(&'static str, TokenType)> 
     Some(res)
 }
 
-fn two_character_token(
-    first: char,
-    second: Option<&char>,
-) -> Option<(TokenType, &'static str)> {
+fn two_character_token(first: char, second: Option<&char>) -> Option<(TokenType, &'static str)> {
     let token_pair = match (first, *second?) {
         ('=', '=') => (EqualEqual, "=="),
         ('!', '=') => (BangEqual, "!="),
@@ -117,11 +112,8 @@ struct ScanResult {
     encountered_lexical_error: bool,
 }
 
-static RULE_FUNCTIONS: [fn(&mut Peekable<Chars>) -> Option<Token>; 3] = [
-    comment_rule,
-    two_character_rule,
-    single_character_rule,
-];
+static RULE_FUNCTIONS: [fn(&mut Peekable<Chars>) -> Option<Token>; 3] =
+    [comment_rule, two_character_rule, single_character_rule];
 
 fn comment_rule(char_iterator: &mut Peekable<Chars>) -> Option<Token> {
     if char_iterator.peek().copied() != Some('/') {
