@@ -1,4 +1,5 @@
 mod interpreter;
+use crate::TokenType::*;
 use interpreter::token::Token;
 use interpreter::token_type::TokenType;
 use std::env;
@@ -61,7 +62,7 @@ fn scan_tokens(source: &str) -> ScanResult {
             encountered_lexical_error = true;
         }
     }
-    tokens.push(Token::new(TokenType::Eof, ""));
+    tokens.push(Token::new(Eof, ""));
     ScanResult {
         tokens,
         encountered_lexical_error,
@@ -69,34 +70,35 @@ fn scan_tokens(source: &str) -> ScanResult {
 }
 
 fn single_character_token(character: char) -> Option<(&'static str, TokenType)> {
-    match character {
-        '(' => Some(("(", TokenType::LeftParen)),
-        ')' => Some((")", TokenType::RightParen)),
-        '{' => Some(("{", TokenType::LeftBrace)),
-        '}' => Some(("}", TokenType::RightBrace)),
-        ',' => Some((",", TokenType::Comma)),
-        '.' => Some((".", TokenType::Dot)),
-        '-' => Some(("-", TokenType::Minus)),
-        '+' => Some(("+", TokenType::Plus)),
-        ';' => Some((";", TokenType::Semicolon)),
-        '*' => Some(("*", TokenType::Star)),
-        '=' => Some(("=", TokenType::Equal)),
-        '!' => Some(("!", TokenType::Bang)),
-        '<' => Some(("<", TokenType::Less)),
-        '>' => Some((">", TokenType::Greater)),
-        _ => None,
-    }
+    let res = match character {
+        '(' => ("(", LeftParen),
+        ')' => (")", RightParen),
+        '{' => ("{", LeftBrace),
+        '}' => ("}", RightBrace),
+        ',' => (",", Comma),
+        '.' => (".", Dot),
+        '-' => ("-", Minus),
+        '+' => ("+", Plus),
+        ';' => (";", Semicolon),
+        '*' => ("*", Star),
+        '=' => ("=", Equal),
+        '!' => ("!", Bang),
+        '<' => ("<", Less),
+        '>' => (">", Greater),
+        _ => return None,
+    };
+    Some(res)
 }
 
 fn two_character_token(first: char, second: Option<&char>) -> Option<(TokenType, &'static str)> {
-    let second_char = second?;
-    match (first, second_char) {
-        ('=', '=') => Some((TokenType::EqualEqual, "==")),
-        ('!', '=') => Some((TokenType::BangEqual, "!=")),
-        ('<', '=') => Some((TokenType::LessEqual, "<=")),
-        ('>', '=') => Some((TokenType::GreaterEqual, ">=")),
-        _ => None,
-    }
+    let token_pair = match (first, second?) {
+        ('=', '=') => (EqualEqual, "=="),
+        ('!', '=') => (BangEqual, "!="),
+        ('<', '=') => (LessEqual, "<="),
+        ('>', '=') => (GreaterEqual, ">="),
+        _ => return None,
+    };
+    Some(token_pair)
 }
 
 struct ScanResult {
@@ -226,7 +228,7 @@ mod tests {
             ]
         );
     }
-    
+
     #[test]
     fn test_unexpected_characters() {
         let (outputs, error) = lex_outputs("$#(");
