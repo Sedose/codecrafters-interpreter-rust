@@ -47,86 +47,33 @@ fn main() {
     }
 }
 
-fn comment_rule(char_iterator: &mut Peekable<Chars>) -> Option<Token> {
-    if let Some('/') = char_iterator.peek().copied() {
-        char_iterator.next();
-        if let Some('/') = char_iterator.peek().copied() {
-            char_iterator.next();
-            while let Some(&next_character) = char_iterator.peek() {
-                if next_character == '\n' {
-                    break;
-                }
-                char_iterator.next();
-            }
-            return None;
-        }
-        return Some(Token::new(Slash, "/"));
-    }
-    None
-}
-
-fn two_character_rule(char_iterator: &mut Peekable<Chars>) -> Option<Token> {
-    if let Some(&first_character) = char_iterator.peek() {
-        let mut iterator_clone = char_iterator.clone();
-        iterator_clone.next();
-        if let Some(&second_character) = iterator_clone.peek() {
-            if let Some((token_type, lexeme)) = two_character_token(first_character, Some(&second_character)) {
-                char_iterator.next();
-                char_iterator.next();
-                return Some(Token::new(token_type, lexeme));
-            }
-        }
-    }
-    None
-}
-
-fn single_character_rule(char_iterator: &mut Peekable<Chars>) -> Option<Token> {
-    if let Some(&character) = char_iterator.peek() {
-        if let Some((lexeme, token_type)) = single_character_token(character) {
-            char_iterator.next();
-            return Some(Token::new(token_type, lexeme));
-        }
-    }
-    None
-}
-
-static RULE_FUNCTIONS: [fn(&mut Peekable<Chars>) -> Option<Token>; 3] = [
-    comment_rule,
-    two_character_rule,
-    single_character_rule,
-];
-
 fn scan_tokens(source: &str) -> ScanResult {
-    let mut collected_tokens = Vec::new();
-    let mut found_lexical_error = false;
-    let mut char_iterator = source.chars().peekable();
+    let mut tokens = Vec::new();
+    let mut encountered_lexical_error = false;
+    let mut character_iterator = source.chars().peekable();
 
-    while char_iterator.peek().is_some() {
-        let mut matched = false;
-        for rule in RULE_FUNCTIONS {
-            if let Some(token) = rule(&mut char_iterator) {
-                if token.token_type != Comment {
-                    collected_tokens.push(token);
-                }
-                matched = true;
-                break;
+    while let Some(_) = character_iterator.peek() {
+        let maybe_token = RULE_FUNCTIONS
+          .iter()
+          .find_map(|rule| rule(&mut character_iterator));
+
+        if let Some(token) = maybe_token {
+            if token.token_type != Comment {
+                tokens.push(token);
             }
-        }
-        if !matched {
-            if let Some(unexpected_character) = char_iterator.next() {
-                eprintln!(
-                    "[line 1] Error: Unexpected character: {}",
-                    unexpected_character
-                );
-                found_lexical_error = true;
-            }
+        } else if let Some(unexpected_character) = character_iterator.next() {
+            eprintln!(
+                "[line 1] Error: Unexpected character: {}",
+                unexpected_character
+            );
+            encountered_lexical_error = true;
         }
     }
 
-    collected_tokens.push(Token::new(Eof, ""));
+    tokens.push(Token::new(Eof, ""));
     ScanResult {
-        tokens: collected_tokens,
-        encountered_lexical_error: found_lexical_error,
+        tokens,
+        encountered_lexical_error,
     }
 }
 
@@ -168,6 +115,47 @@ fn two_character_token(
 struct ScanResult {
     tokens: Vec<Token>,
     encountered_lexical_error: bool,
+}
+
+static RULE_FUNCTIONS: [fn(&mut Peekable<Chars>) -> Option<Token>; 3] = [
+    comment_rule,
+    two_character_rule,
+    single_character_rule,
+];
+
+fn comment_rule(char_iterator: &mut Peekable<Chars>) -> Option<Token> {
+    if char_iterator.peek().copied() != Some('/') {
+        return None;
+    }
+    char_iterator.next();
+    if char_iterator.peek().copied() != Some('/') {
+        return Some(Token::new(Slash, "/"));
+    }
+    char_iterator.next();
+    for next_character in char_iterator {
+        if next_character == '\n' {
+            break;
+        }
+    }
+    None
+}
+
+pub fn two_character_rule(character_iterator: &mut Peekable<Chars>) -> Option<Token> {
+    let current_character = *character_iterator.peek()?;
+    let mut ahead_iterator = character_iterator.clone();
+    ahead_iterator.next();
+    let next_character = *ahead_iterator.peek()?;
+    let (token_type, lexeme) = two_character_token(current_character, Some(&next_character))?;
+    character_iterator.next();
+    character_iterator.next();
+    Some(Token::new(token_type, lexeme))
+}
+
+pub fn single_character_rule(character_iterator: &mut Peekable<Chars>) -> Option<Token> {
+    let current_character = *character_iterator.peek()?;
+    let (lexeme, token_type) = single_character_token(current_character)?;
+    character_iterator.next();
+    Some(Token::new(token_type, lexeme))
 }
 
 #[cfg(test)]
