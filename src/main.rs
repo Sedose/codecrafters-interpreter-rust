@@ -60,6 +60,16 @@ fn scan_tokens(source: &str) -> ScanResult {
                 Some((TokenType::BangEqual, "!="))
             }
             ('!', _) => Some((TokenType::Bang, "!")),
+            ('<', Some(&'=')) => {
+                chars.next();
+                Some((TokenType::LessEqual, "<="))
+            }
+            ('<', _) => Some((TokenType::Less, "<")),
+            ('>', Some(&'=')) => {
+                chars.next();
+                Some((TokenType::GreaterEqual, ">="))
+            }
+            ('>', _) => Some((TokenType::Greater, ">")),
             _ => None,
         } {
             tokens.push(Token::new(token_type, lexeme));
@@ -207,6 +217,22 @@ mod tests {
         );
     }
 
+    #[test]
+    fn test_relational_operators() {
+        let (outputs, error) = lex_outputs("<<=>>=");
+        assert!(!error);
+        assert_eq!(
+            outputs,
+            vec![
+                "LESS < null",
+                "LESS_EQUAL <= null",
+                "GREATER > null",
+                "GREATER_EQUAL >= null",
+                "EOF  null",
+            ]
+        );
+    }
+    
     #[test]
     fn test_unexpected_characters() {
         let (outputs, error) = lex_outputs("$#(");
