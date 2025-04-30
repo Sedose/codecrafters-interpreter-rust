@@ -89,11 +89,12 @@ fn single_character_token(character: char) -> Option<(&'static str, TokenType)> 
 }
 
 fn two_character_token(first: char, second: Option<&char>) -> Option<(TokenType, &'static str)> {
-    match (first, second) {
-        ('=', Some(&'=')) => Some((TokenType::EqualEqual, "==")),
-        ('!', Some(&'=')) => Some((TokenType::BangEqual, "!=")),
-        ('<', Some(&'=')) => Some((TokenType::LessEqual, "<=")),
-        ('>', Some(&'=')) => Some((TokenType::GreaterEqual, ">=")),
+    let second_char = second?;
+    match (first, second_char) {
+        ('=', '=') => Some((TokenType::EqualEqual, "==")),
+        ('!', '=') => Some((TokenType::BangEqual, "!=")),
+        ('<', '=') => Some((TokenType::LessEqual, "<=")),
+        ('>', '=') => Some((TokenType::GreaterEqual, ">=")),
         _ => None,
     }
 }
