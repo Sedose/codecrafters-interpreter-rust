@@ -49,29 +49,8 @@ fn scan_tokens(source: &str) -> ScanResult {
     let mut chars = source.chars().peekable();
 
     while let Some(c) = chars.next() {
-        if let Some((token_type, lexeme)) = match (c, chars.peek()) {
-            ('=', Some(&'=')) => {
-                chars.next();
-                Some((TokenType::EqualEqual, "=="))
-            }
-            ('=', _) => Some((TokenType::Equal, "=")),
-            ('!', Some(&'=')) => {
-                chars.next();
-                Some((TokenType::BangEqual, "!="))
-            }
-            ('!', _) => Some((TokenType::Bang, "!")),
-            ('<', Some(&'=')) => {
-                chars.next();
-                Some((TokenType::LessEqual, "<="))
-            }
-            ('<', _) => Some((TokenType::Less, "<")),
-            ('>', Some(&'=')) => {
-                chars.next();
-                Some((TokenType::GreaterEqual, ">="))
-            }
-            ('>', _) => Some((TokenType::Greater, ">")),
-            _ => None,
-        } {
+        if let Some((token_type, lexeme)) = two_character_token(c, chars.peek()) {
+            chars.next();
             tokens.push(Token::new(token_type, lexeme));
             continue;
         }
@@ -101,6 +80,20 @@ fn single_character_token(character: char) -> Option<(&'static str, TokenType)> 
         '+' => Some(("+", TokenType::Plus)),
         ';' => Some((";", TokenType::Semicolon)),
         '*' => Some(("*", TokenType::Star)),
+        '=' => Some(("=", TokenType::Equal)),
+        '!' => Some(("!", TokenType::Bang)),
+        '<' => Some(("<", TokenType::Less)),
+        '>' => Some((">", TokenType::Greater)),
+        _ => None,
+    }
+}
+
+fn two_character_token(first: char, second: Option<&char>) -> Option<(TokenType, &'static str)> {
+    match (first, second) {
+        ('=', Some(&'=')) => Some((TokenType::EqualEqual, "==")),
+        ('!', Some(&'=')) => Some((TokenType::BangEqual, "!=")),
+        ('<', Some(&'=')) => Some((TokenType::LessEqual, "<=")),
+        ('>', Some(&'=')) => Some((TokenType::GreaterEqual, ">=")),
         _ => None,
     }
 }
