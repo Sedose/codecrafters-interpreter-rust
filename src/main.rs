@@ -49,16 +49,34 @@ fn scan_tokens(source: &str) -> ScanResult {
     let mut encountered_lexical_error = false;
     let mut chars = source.chars().peekable();
 
-    while let Some(c) = chars.next() {
-        if let Some((token_type, lexeme)) = two_character_token(c, chars.peek()) {
+    while let Some(current_char) = chars.next() {
+        if current_char == '/' {
+            match chars.peek() {
+                Some('/') => {
+                    // Skip comment
+                    while let Some(next_char) = chars.peek() {
+                        if *next_char == '\n' {
+                            break;
+                        }
+                        chars.next();
+                    }
+                }
+                _ => {
+                    tokens.push(Token::new(Slash, "/"));
+                }
+            }
+            continue;
+        }
+
+        if let Some((token_type, lexeme)) = two_character_token(current_char, chars.peek()) {
             chars.next();
             tokens.push(Token::new(token_type, lexeme));
             continue;
         }
-        if let Some((lexeme, token_type)) = single_character_token(c) {
+        if let Some((lexeme, token_type)) = single_character_token(current_char) {
             tokens.push(Token::new(token_type, lexeme));
         } else {
-            eprintln!("[line 1] Error: Unexpected character: {}", c);
+            eprintln!("[line 1] Error: Unexpected character: {}", current_char);
             encountered_lexical_error = true;
         }
     }
