@@ -23,12 +23,13 @@ pub fn scan_tokens(source: &str, rule_functions: &[RuleFunction]) -> ScanResult 
             tokens.push(token);
             continue;
         }
-        let unexpected_character = character_iterator.next().unwrap();
-        eprintln!(
-            "[line 1] Error: Unexpected character: {}",
-            unexpected_character
-        );
-        encountered_lexical_error = true;
+        if let Some(unexpected_character) = character_iterator.next() {
+            eprintln!(
+                "[line 1] Error: Unexpected character: {}",
+                unexpected_character
+            );
+            encountered_lexical_error = true;
+        }
     }
 
     tokens.push(Token::new(Eof, ""));
