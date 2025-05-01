@@ -11,20 +11,24 @@ pub fn scan_tokens(source: &str, rule_functions: &[RuleFunction]) -> ScanResult 
     let mut encountered_lexical_error = false;
     let mut character_iterator = source.chars().peekable();
 
-    while character_iterator.peek().is_some() {
-        let maybe_token = rule_functions
-            .iter()
-            .find_map(|rule| rule(&mut character_iterator));
-
-        if let Some(token) = maybe_token {
-            tokens.push(token);
-        } else if let Some(unexpected_character) = character_iterator.next() {
-            eprintln!(
-                "[line 1] Error: Unexpected character: {}",
-                unexpected_character
-            );
-            encountered_lexical_error = true;
+    while let Some(&current_character) = character_iterator.peek() {
+        if current_character.is_whitespace() {
+            character_iterator.next();
+            continue;
         }
+        if let Some(token) = rule_functions
+            .iter()
+            .find_map(|rule| rule(&mut character_iterator))
+        {
+            tokens.push(token);
+            continue;
+        }
+        let unexpected_character = character_iterator.next().unwrap();
+        eprintln!(
+            "[line 1] Error: Unexpected character: {}",
+            unexpected_character
+        );
+        encountered_lexical_error = true;
     }
 
     tokens.push(Token::new(Eof, ""));

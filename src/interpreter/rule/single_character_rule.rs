@@ -1,6 +1,9 @@
 use crate::interpreter::token::Token;
 use crate::interpreter::token_type::TokenType;
-use crate::interpreter::token_type::TokenType::*;
+use crate::interpreter::token_type::TokenType::{
+    Bang, Comma, Dot, Equal, Greater, LeftBrace, LeftParen, Less, Minus, Plus, RightBrace,
+    RightParen, Semicolon, Star,
+};
 use std::iter::Peekable;
 use std::str::Chars;
 

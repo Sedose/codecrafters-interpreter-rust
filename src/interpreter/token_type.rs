@@ -24,27 +24,28 @@ pub enum TokenType {
 
 impl TokenType {
     pub fn as_output(&self) -> &'static str {
+        use TokenType::*;
         match self {
-            TokenType::LeftParen => "LEFT_PAREN",
-            TokenType::RightParen => "RIGHT_PAREN",
-            TokenType::LeftBrace => "LEFT_BRACE",
-            TokenType::RightBrace => "RIGHT_BRACE",
-            TokenType::Comma => "COMMA",
-            TokenType::Dot => "DOT",
-            TokenType::Minus => "MINUS",
-            TokenType::Plus => "PLUS",
-            TokenType::Semicolon => "SEMICOLON",
-            TokenType::Slash => "SLASH",
-            TokenType::Star => "STAR",
-            TokenType::Bang => "BANG",
-            TokenType::BangEqual => "BANG_EQUAL",
-            TokenType::Equal => "EQUAL",
-            TokenType::EqualEqual => "EQUAL_EQUAL",
-            TokenType::Less => "LESS",
-            TokenType::LessEqual => "LESS_EQUAL",
-            TokenType::Greater => "GREATER",
-            TokenType::GreaterEqual => "GREATER_EQUAL",
-            TokenType::Eof => "EOF",
+            LeftParen => "LEFT_PAREN",
+            RightParen => "RIGHT_PAREN",
+            LeftBrace => "LEFT_BRACE",
+            RightBrace => "RIGHT_BRACE",
+            Comma => "COMMA",
+            Dot => "DOT",
+            Minus => "MINUS",
+            Plus => "PLUS",
+            Semicolon => "SEMICOLON",
+            Slash => "SLASH",
+            Star => "STAR",
+            Bang => "BANG",
+            BangEqual => "BANG_EQUAL",
+            Equal => "EQUAL",
+            EqualEqual => "EQUAL_EQUAL",
+            Less => "LESS",
+            LessEqual => "LESS_EQUAL",
+            Greater => "GREATER",
+            GreaterEqual => "GREATER_EQUAL",
+            Eof => "EOF",
         }
     }
 }
