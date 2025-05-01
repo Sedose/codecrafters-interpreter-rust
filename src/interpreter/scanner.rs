@@ -199,14 +199,10 @@ mod tests {
         assert_eq!(errors[1].unexpected_character, '@');
         assert_eq!(
             outputs,
-            vec![
-                "LEFT_PAREN ( null", 
-                "RIGHT_PAREN ) null", 
-                "EOF  null"
-            ]
+            vec!["LEFT_PAREN ( null", "RIGHT_PAREN ) null", "EOF  null"]
         );
     }
-    
+
     fn lex_outputs(source: &str) -> (Vec<String>, Vec<ErrorInfo>) {
         let ScanResult { tokens, errors } = scan_tokens(source, &RULE_FUNCTIONS);
         let outputs = tokens
