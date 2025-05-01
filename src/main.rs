@@ -29,16 +29,20 @@ fn main() {
         String::new()
     });
 
-    let ScanResult {
-        tokens,
-        encountered_lexical_error,
-    } = scan_tokens(&file_contents, &RULE_FUNCTIONS);
+    let ScanResult { tokens, errors } = scan_tokens(&file_contents, &RULE_FUNCTIONS);
+
+    for error in &errors {
+        eprintln!(
+            "[line {}] Error: Unexpected character: {}",
+            error.line_number, error.unexpected_character
+        )
+    }
 
     for token in tokens {
         println!("{} {} null", token.token_type.as_output(), token.lexeme);
     }
 
-    if encountered_lexical_error {
+    if !errors.is_empty() {
         process::exit(65);
     }
 }

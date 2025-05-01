@@ -6,13 +6,21 @@ use crate::interpreter::token_type::TokenType::Eof;
 use std::iter::Peekable;
 use std::str::Chars;
 
+pub struct ErrorInfo {
+    pub line_number: usize,
+    pub unexpected_character: char,
+}
+
 pub fn scan_tokens(source: &str, rule_functions: &[RuleFunction]) -> ScanResult {
     let mut tokens = Vec::new();
-    let mut encountered_lexical_error = false;
+    let mut errors = Vec::new();
     let mut character_iterator = source.chars().peekable();
-
+    let mut line_number = 1;
     while let Some(&current_character) = character_iterator.peek() {
         if current_character.is_whitespace() {
+            if current_character == '\n' {
+                line_number += 1;
+            }
             character_iterator.next();
             continue;
         }
@@ -24,26 +32,22 @@ pub fn scan_tokens(source: &str, rule_functions: &[RuleFunction]) -> ScanResult 
             continue;
         }
         if let Some(unexpected_character) = character_iterator.next() {
-            eprintln!(
-                "[line 1] Error: Unexpected character: {}",
-                unexpected_character
-            );
-            encountered_lexical_error = true;
+            errors.push(ErrorInfo {
+                line_number,
+                unexpected_character,
+            });
         }
     }
 
     tokens.push(Token::new(Eof, ""));
-    ScanResult {
-        tokens,
-        encountered_lexical_error,
-    }
+    ScanResult { tokens, errors }
 }
 
 type RuleFunction = fn(&mut Peekable<Chars>) -> Option<Token>;
 
 pub struct ScanResult {
     pub tokens: Vec<Token>,
-    pub encountered_lexical_error: bool,
+    pub errors: Vec<ErrorInfo>,
 }
 
 pub static RULE_FUNCTIONS: [RuleFunction; 3] =
@@ -55,8 +59,10 @@ mod tests {
 
     #[test]
     fn test_combined_mixed_input() {
-        let (outputs, error) = lex_outputs("(,{!==}$)");
-        assert!(error);
+        let (outputs, errors) = lex_outputs("(,{!==}$)");
+        assert_eq!(errors.len(), 1);
+        assert_eq!(errors[0].line_number, 1);
+        assert_eq!(errors[0].unexpected_character, '$');
         assert_eq!(
             outputs,
             vec![
@@ -74,8 +80,8 @@ mod tests {
 
     #[test]
     fn test_parentheses_scanning() {
-        let (outputs, error) = lex_outputs("(()");
-        assert!(!error);
+        let (outputs, errors) = lex_outputs("(()");
+        assert!(errors.is_empty());
         assert_eq!(
             outputs,
             vec![
@@ -89,8 +95,8 @@ mod tests {
 
     #[test]
     fn test_braces_scanning() {
-        let (outputs, error) = lex_outputs("{{}}");
-        assert!(!error);
+        let (outputs, errors) = lex_outputs("{{}}");
+        assert!(errors.is_empty());
         assert_eq!(
             outputs,
             vec![
@@ -105,8 +111,8 @@ mod tests {
 
     #[test]
     fn test_single_character_tokens() {
-        let (outputs, error) = lex_outputs("({*.,+*})");
-        assert!(!error);
+        let (outputs, errors) = lex_outputs("({*.,+*})");
+        assert!(errors.is_empty());
         assert_eq!(
             outputs,
             vec![
@@ -126,8 +132,8 @@ mod tests {
 
     #[test]
     fn test_assignment_and_equality_scanning() {
-        let (outputs, error) = lex_outputs("={===}");
-        assert!(!error);
+        let (outputs, errors) = lex_outputs("={===}");
+        assert!(errors.is_empty());
         assert_eq!(
             outputs,
             vec![
@@ -143,8 +149,8 @@ mod tests {
 
     #[test]
     fn test_negation_and_inequality_scanning() {
-        let (outputs, error) = lex_outputs("!!===");
-        assert!(!error);
+        let (outputs, errors) = lex_outputs("!!===");
+        assert!(errors.is_empty());
         assert_eq!(
             outputs,
             vec![
@@ -158,8 +164,8 @@ mod tests {
 
     #[test]
     fn test_relational_operators() {
-        let (outputs, error) = lex_outputs("<<=>>=");
-        assert!(!error);
+        let (outputs, errors) = lex_outputs("<<=>>=");
+        assert!(errors.is_empty());
         assert_eq!(
             outputs,
             vec![
@@ -174,20 +180,39 @@ mod tests {
 
     #[test]
     fn test_unexpected_characters() {
-        let (outputs, error) = lex_outputs("$#(");
-        assert!(error);
+        let (outputs, errors) = lex_outputs("$#(");
+        assert_eq!(errors.len(), 2);
+        assert_eq!(errors[0].line_number, 1);
+        assert_eq!(errors[0].unexpected_character, '$');
+        assert_eq!(errors[1].line_number, 1);
+        assert_eq!(errors[1].unexpected_character, '#');
         assert_eq!(outputs, vec!["LEFT_PAREN ( null", "EOF  null",]);
     }
 
-    fn lex_outputs(source: &str) -> (Vec<String>, bool) {
-        let ScanResult {
-            tokens,
-            encountered_lexical_error,
-        } = scan_tokens(source, &RULE_FUNCTIONS);
+    #[test]
+    fn test_multiline_lexical_errors() {
+        let (outputs, errors) = lex_outputs("#\n(\n)\n@");
+        assert_eq!(errors.len(), 2);
+        assert_eq!(errors[0].line_number, 1);
+        assert_eq!(errors[0].unexpected_character, '#');
+        assert_eq!(errors[1].line_number, 4);
+        assert_eq!(errors[1].unexpected_character, '@');
+        assert_eq!(
+            outputs,
+            vec![
+                "LEFT_PAREN ( null", 
+                "RIGHT_PAREN ) null", 
+                "EOF  null"
+            ]
+        );
+    }
+    
+    fn lex_outputs(source: &str) -> (Vec<String>, Vec<ErrorInfo>) {
+        let ScanResult { tokens, errors } = scan_tokens(source, &RULE_FUNCTIONS);
         let outputs = tokens
             .into_iter()
             .map(|token| format!("{} {} null", token.token_type.as_output(), token.lexeme))
             .collect();
-        (outputs, encountered_lexical_error)
+        (outputs, errors)
     }
 }
