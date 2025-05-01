@@ -31,14 +31,11 @@ pub fn scan_tokens(source: &str, rule_functions: &[RuleFunction]) -> ScanResult 
             tokens.push(token);
             continue;
         }
-        match character_iterator.next() {
-            Some(unexpected_character) => {
-                errors.push(ErrorInfo {
-                    line_number,
-                    unexpected_character,
-                });
-            }
-            None => break,
+        if let Some(unexpected_character) = character_iterator.next() {
+            errors.push(ErrorInfo {
+                line_number,
+                unexpected_character,
+            });
         }
     }
 
