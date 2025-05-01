@@ -32,6 +32,9 @@ pub fn scan_tokens(source: &str, rule_functions: &[RuleFunction]) -> ScanResult 
             continue;
         }
         if let Some(unexpected_character) = character_iterator.next() {
+            if unexpected_character == '\n' {
+                line_number += 1;
+            }
             errors.push(ErrorInfo {
                 line_number,
                 unexpected_character,
