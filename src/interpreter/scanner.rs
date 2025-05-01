@@ -17,10 +17,12 @@ pub fn scan_tokens(source: &str, rule_functions: &[RuleFunction]) -> ScanResult 
     let mut character_iterator = source.chars().peekable();
     let mut line_number = 1;
     while let Some(&current_character) = character_iterator.peek() {
+        if current_character == '\n' {
+            line_number += 1;
+            character_iterator.next();
+            continue;
+        }
         if current_character.is_whitespace() {
-            if current_character == '\n' {
-                line_number += 1;
-            }
             character_iterator.next();
             continue;
         }
