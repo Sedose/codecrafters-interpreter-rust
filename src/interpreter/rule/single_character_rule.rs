@@ -7,7 +7,10 @@ use crate::interpreter::token_type::TokenType::{
 use std::iter::Peekable;
 use std::str::Chars;
 
-pub fn single_character_rule(character_iterator: &mut Peekable<Chars>) -> Option<Token> {
+pub fn single_character_rule(
+    character_iterator: &mut Peekable<Chars>,
+    _line_number: &mut usize,
+) -> Option<Token> {
     let current_character = *character_iterator.peek()?;
     let (lexeme, token_type) = single_character_token(current_character)?;
     character_iterator.next();

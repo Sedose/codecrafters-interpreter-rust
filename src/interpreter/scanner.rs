@@ -26,7 +26,7 @@ pub fn scan_tokens(source: &str, rule_functions: &[RuleFunction]) -> ScanResult 
         }
         if let Some(token) = rule_functions
             .iter()
-            .find_map(|rule| rule(&mut character_iterator))
+            .find_map(|rule| rule(&mut character_iterator, &mut line_number))
         {
             tokens.push(token);
             continue;
@@ -43,7 +43,7 @@ pub fn scan_tokens(source: &str, rule_functions: &[RuleFunction]) -> ScanResult 
     ScanResult { tokens, errors }
 }
 
-type RuleFunction = fn(&mut Peekable<Chars>) -> Option<Token>;
+type RuleFunction = fn(&mut Peekable<Chars>, &mut usize) -> Option<Token>;
 
 pub struct ScanResult {
     pub tokens: Vec<Token>,

@@ -2,7 +2,10 @@ use crate::interpreter::token::Token;
 use std::iter::Peekable;
 use std::str::Chars;
 
-pub fn comment_rule(character_iterator: &mut Peekable<Chars>) -> Option<Token> {
+pub fn comment_rule(
+    character_iterator: &mut Peekable<Chars>,
+    line_number: &mut usize,
+) -> Option<Token> {
     if *character_iterator.peek()? != '/' {
         return None;
     }
@@ -15,6 +18,7 @@ pub fn comment_rule(character_iterator: &mut Peekable<Chars>) -> Option<Token> {
     character_iterator.next();
     while let Some(&ch) = character_iterator.peek() {
         if ch == '\n' {
+            *line_number += 1;
             break;
         }
         character_iterator.next();

@@ -4,7 +4,10 @@ use crate::interpreter::token_type::TokenType::{BangEqual, EqualEqual, GreaterEq
 use std::iter::Peekable;
 use std::str::Chars;
 
-pub fn two_character_rule(character_iterator: &mut Peekable<Chars>) -> Option<Token> {
+pub fn two_character_rule(
+    character_iterator: &mut Peekable<Chars>,
+    _line_number: &mut usize,
+) -> Option<Token> {
     let current_character = *character_iterator.peek()?;
     let mut ahead_iterator = character_iterator.clone();
     ahead_iterator.next();
