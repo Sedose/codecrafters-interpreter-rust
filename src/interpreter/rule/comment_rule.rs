@@ -6,22 +6,24 @@ pub fn comment_rule(
     character_iterator: &mut Peekable<Chars>,
     line_number: &mut usize,
 ) -> Option<Token> {
-    if character_iterator.peek() != Some(&'/') {
+    let mut iterator_cloned = character_iterator.clone();
+
+    let next_two_characters: Vec<char> = iterator_cloned.by_ref().take(2).collect();
+
+    if next_two_characters != ['/', '/'] {
         return None;
     }
-    let mut clone = character_iterator.clone();
-    clone.next();
-    if clone.peek() != Some(&'/') {
-        return None;
-    }
+
     character_iterator.next();
     character_iterator.next();
-    while let Some(&ch) = character_iterator.peek() {
-        character_iterator.next();
-        if ch == '\n' {
+
+    while let Some(character) = character_iterator.peek() {
+        if *character == '\n' {
+            character_iterator.next();
             *line_number += 1;
             break;
         }
+        character_iterator.next();
     }
     None
 }
