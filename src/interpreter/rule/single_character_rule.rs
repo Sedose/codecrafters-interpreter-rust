@@ -2,7 +2,7 @@ use crate::interpreter::token::Token;
 use crate::interpreter::token_type::TokenType;
 use crate::interpreter::token_type::TokenType::{
     Bang, Comma, Dot, Equal, Greater, LeftBrace, LeftParen, Less, Minus, Plus, RightBrace,
-    RightParen, Semicolon, Star,
+    RightParen, Semicolon, Slash, Star,
 };
 use std::iter::Peekable;
 use std::str::Chars;
@@ -31,6 +31,7 @@ fn single_character_token(character: char) -> Option<(&'static str, TokenType)> 
         '*' => ("*", Star),
         '=' => ("=", Equal),
         '!' => ("!", Bang),
+        '/' => ("/", Slash),
         '<' => ("<", Less),
         '>' => (">", Greater),
         _ => return None,
