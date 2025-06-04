@@ -24,6 +24,11 @@ pub fn scan_tokens(source: &str, rule_functions: &[RuleFunction]) -> ScanResult 
             character_iterator.next();
             continue;
         }
+
+        if comment_rule(&mut character_iterator, &mut line_number) {
+            continue;
+        }
+
         if let Some(token) = rule_functions
             .iter()
             .find_map(|rule| rule(&mut character_iterator, &mut line_number))
@@ -50,8 +55,8 @@ pub struct ScanResult {
     pub errors: Vec<ErrorInfo>,
 }
 
-pub static RULE_FUNCTIONS: [RuleFunction; 3] =
-    [comment_rule, two_character_rule, single_character_rule];
+pub static RULE_FUNCTIONS: [RuleFunction; 2] =
+    [two_character_rule, single_character_rule];
 
 #[cfg(test)]
 mod tests {
@@ -201,6 +206,13 @@ mod tests {
             outputs,
             vec!["LEFT_PAREN ( null", "RIGHT_PAREN ) null", "EOF  null"]
         );
+    }
+
+    #[test]
+    fn test_comment_followed_by_whitespace() {
+        let (outputs, errors) = lex_outputs("// comment\n +");
+        assert!(errors.is_empty());
+        assert_eq!(outputs, vec!["PLUS + null", "EOF  null"]);
     }
 
     fn lex_outputs(source: &str) -> (Vec<String>, Vec<ErrorInfo>) {

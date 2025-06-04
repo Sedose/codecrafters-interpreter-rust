@@ -1,17 +1,17 @@
-use crate::interpreter::token::Token;
+
 use std::iter::Peekable;
 use std::str::Chars;
 
 pub fn comment_rule(
     character_iterator: &mut Peekable<Chars>,
     line_number: &mut usize,
-) -> Option<Token> {
+) -> bool {
     let mut iterator_cloned = character_iterator.clone();
 
     let next_two_characters: Vec<char> = iterator_cloned.by_ref().take(2).collect();
 
     if next_two_characters != ['/', '/'] {
-        return None;
+        return false;
     }
 
     character_iterator.next();
@@ -25,5 +25,5 @@ pub fn comment_rule(
         }
         character_iterator.next();
     }
-    None
+    true
 }
